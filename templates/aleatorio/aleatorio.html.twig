@@ -1,43 +1,94 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hola AleatorioController!{% endblock %}
+{% block title %}Hola AleatorioController!
+{% endblock %}
 
 {% block body %}
-<style>
-    .example-wrapper { margin: 1em auto; max-width: 800px; width: 95%; font: 18px/1.5 sans-serif; }
-    .example-wrapper code { background: #F5F5F5; padding: 2px 6px; }
-</style>
+	<style>
+		.example-wrapper {
+			margin: 1em auto;
+			max-width: 800px;
+			width: 95%;
+			font: 18px / 1.5 sans-serif;
+		}
+		.example-wrapper code {
+			background: #F5F5F5;
+			padding: 2px 6px;
+		}
+	</style>
 
-<section class="example-wrapper">
-    <h1>Hola {{ controller_name }}! ✅</h1>
+	<section class="example-wrapper">
+		<h1>Hola
+			{{ controller_name }}! ✅</h1>
 
-    This friendly message is coming from:
-    <ul>
-        <li>Your controller at <code>/var/www/html/symfony7/src/Controller/AleatorioController.php</code></li>
-        <li>Your template at <code>/var/www/html/symfony7/templates/aleatorio/index.html.twig</code></li>
-    </ul>
-    <p class="alert alert-warning m-3 p-3">Tu aleatorio1 es: {{ numero_aleatorio1 }}</p>
-    <p class="alert alert-warning m-3 p-3">Tu aleatorio2 es: {{ numero_aleatorio2 }}</p>
-</section>
 
-<section class="example-wrapper">
-   {# COMENTARIO TWIG #}
-   {# BUCLE FOR #}
-    <table>
-        <thead>
-            <tr>
-                <th></th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td></td>
-                <td></td>
-            </tr>
-        </tbody>
-    </table>
-    <p class="alert alert-warning m-3 p-3">Tu aleatorio1 es: {{ numero_aleatorio1 }}</p>
-    <p class="alert alert-warning m-3 p-3">Tu aleatorio2 es: {{ numero_aleatorio2 }}</p>
-</section>
+		This friendly message is coming from:
+		<ul>
+			<li>Your controller at
+				<code>/var/www/html/symfony7/src/Controller/AleatorioController.php</code>
+			</li>
+			<li>Your template at
+				<code>/var/www/html/symfony7/templates/aleatorio/index.html.twig</code>
+			</li>
+		</ul>
+		<p class="alert alert-warning m-3 p-3">Tu aleatorio1 es:
+			{{ numero_aleatorio1 }}</p>
+		<p class="alert alert-warning m-3 p-3">Tu aleatorio2 es:
+			{{ numero_aleatorio2 }}</p>
+	</section>
+
+	<section class="example-wrapper">
+		{# COMENTARIO TWIG #}
+		{# BUCLE FOR -> {% for var in mum1.. num2 %}  / {% endfor %}#}
+		{# CONDICIONAL if -> {% if condicion %} / {% else %} / {% endif %}#}
+			<table
+			class="table table-primary table-striped"> {# PONE LA TABLA EN MODO CEBRA/ EL primay es el que le da el color#}
+			<thead>
+				<tr>
+					<th>
+						Número
+					</th>
+					<th>
+						¿Es par?
+					</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for numero in numero_aleatorio1.. numero_aleatorio2 %}
+					<tr>
+						<td>
+							{{ numero }}
+						</td>
+						<td>
+							{% if numero %2 == 0  %}
+								Par
+							{% else %}
+								Impar
+							{% endif %}
+						</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		<p class="alert alert-warning m-3 p-3"></p>
+		Tu aleatorio1 es:
+		{{ numero_aleatorio1 }}
+		<p class="alert alert-warning m-3 p-3"></p>
+		Tu aleatorio2 es:
+		{{ numero_aleatorio2 }}
+
+		<section class="example-wrapper">
+			<p class="alert alert-warning m-3 p-3">Tu aleatorio1 es:{{numero_aleatorio1}}</p>
+			<p class="alert alert-warning m-3 p-3">Tu aleatorio2 es:{{numero_aleatorio2}}</p>
+
+	    {# DEFINIR UNA VARIABLE {% SET VARIABLE = VALOR %} #}
+
+			<p class="alert alert-primary m-3 p-3">
+				{% set num = 1 %}
+				{% for n in num.. 5 %}
+					{{ n }}
+				{% endfor %}
+			</p>
+		</p>
+	</section>
 {% endblock %}
