@@ -8,3 +8,8 @@ controllers:
 app_aleatorio_v4:
     path: /mi_aleatorio_44
     controller: App\Controller\AleatorioController::mialeatorio3
+
+# R3b -> ver-articulo/{id}
+app_articulos_un_articulo:
+    path: /mostrar-articulo/{id}
+    controller: App\Controller\ArticulosController::verArticulo
