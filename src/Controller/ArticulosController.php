@@ -13,6 +13,13 @@ use Doctrine\Persistence\ManagerRegistry;
 // use PhpParser\Node\Expr\Cast\String_;
 
 use App\Repository\ArticulosRepository; //<-ESTO ES UNA NUEVA LIBRERIA PARA IR A LA URL DIRECTAMENTE//
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType; //<-COMPONENTES DEL FORMULARIO A PARTIR DE AQUÍ
+use Symfony\Component\Form\Extension\Core\Type\RadioType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\HttpFoundation\Request;
+
 
 final class ArticulosController extends AbstractController
 {
@@ -24,8 +31,8 @@ final class ArticulosController extends AbstractController
         ]);
     }
 
- //C3 -> INSERTAR VARIOS REGISTROS (array) POR CÓDIGOS
- // OJO!!HAY QUE TENER CUIDADO CON EL REGISTRIO DE LA TABLA PRINCIPAL
+    //C3 -> INSERTAR VARIOS REGISTROS (array) POR CÓDIGOS
+    // OJO!!HAY QUE TENER CUIDADO CON EL REGISTRIO DE LA TABLA PRINCIPAL
     #[Route('/crear-articulos', name: 'app_articulos_insertar_articulos')]
     public function crearArticulos(ManagerRegistry $doctrine): Response
     {
@@ -49,7 +56,7 @@ final class ArticulosController extends AbstractController
                 "nifAutor" => "12345678A"
             ],
         ];
-        
+
         //USO FOREACH PARA RECORRER EL ARRAY, Y METO EN LA TABLA ARTIRCULO POR ARTICULO//
         foreach ($articulos as $articulo) {
             $nuevoArticulo = new Articulos();
@@ -65,12 +72,15 @@ final class ArticulosController extends AbstractController
         return new Response("<h2> Artículos metidos </h2>");
     }
 
- // C4 -> INSERTAR UN REGISTRO POR PARÁMETROS
- // VARIANTE C2. CONTROLAMOS DATOS TABLA PRINCIPAL 
+    // C4 -> INSERTAR UN REGISTRO POR PARÁMETROS
+    // VARIANTE C2. CONTROLAMOS DATOS TABLA PRINCIPAL 
     #[Route('/crea-articulo/{titulo}/{publicado}/{nif}', name: 'app_articulos_insertar_articulo')]
-    public function creaArticulo(ManagerRegistry $doctrine,
-    string $titulo, int $publicado, string $nif): Response
-    {
+    public function creaArticulo(
+        ManagerRegistry $doctrine,
+        string $titulo,
+        int $publicado,
+        string $nif
+    ): Response {
         $entityManager = $doctrine->getManager();
 
         $nuevoArticulo = new Articulos();
@@ -84,19 +94,19 @@ final class ArticulosController extends AbstractController
 
         $mensaje = "";
 
-        if($nif==null) {
+        if ($nif == null) {
             $mensaje = "ERROR!! No existe el autor";
-        } else { 
-        $nuevoArticulo->setNifAutor($nif);
-        $entityManager->persist($nuevoArticulo);
-        $entityManager->flush();
-        $mensaje = "EXITO!! Se ha introducido el articulo.";
-    }
+        } else {
+            $nuevoArticulo->setNifAutor($nif);
+            $entityManager->persist($nuevoArticulo);
+            $entityManager->flush();
+            $mensaje = "EXITO!! Se ha introducido el articulo.";
+        }
         return new Response("<h2> $mensaje </h2>");
     }
 
-// R2 -> CONSULTAR COMPLETO TABLA RELACIONADA CON BOOTSTRAP
-// OJO!! MIRAR EL TWIG aticulos.html.twig!!
+    // R2 -> CONSULTAR COMPLETO TABLA RELACIONADA CON BOOTSTRAP
+    // OJO!! MIRAR EL TWIG aticulos.html.twig!!
 
     #[Route('/ver-articulos', name: 'app_articulos_ver')]
     public function verArticulos(ArticulosRepository $repositorio): Response
@@ -105,7 +115,7 @@ final class ArticulosController extends AbstractController
 
         return $this->render('articulos/articulos.html.twig', [
             'controller_name' => 'ArticulosController',
-            'articulos' => $articulos,//<-ESTO ES UN arry DE VARIOS ELEMENTOS
+            'articulos' => $articulos, //<-ESTO ES UN arry DE VARIOS ELEMENTOS
         ]);
     }
 
@@ -118,23 +128,27 @@ final class ArticulosController extends AbstractController
 
         return $this->render('articulos/articulos.html.twig', [
             'controller_name' => 'ArticulosController',
-            'articulos' => [$articulo],//<-ESTO ES UN array DE UN SOLO ELEMENTO
+            'articulos' => [$articulo], //<-ESTO ES UN array DE UN SOLO ELEMENTO
         ]);
     }
 
     //R4 -> CONSULTAR POR PARÁMETROS (SALIDA array JSON!!)
-    #[Route('/consultar-articulos/{nifAutor}/{publicado}', 
-    name:'app_articulos_consultar_articulo')]
-    public function consultarArticulos(ArticulosRepository $repositorio,
-    string $nifAutor, bool $publicado):JsonResponse
-    {
+    #[Route(
+        '/consultar-articulos/{nifAutor}/{publicado}',
+        name: 'app_articulos_consultar_articulo'
+    )]
+    public function consultarArticulos(
+        ArticulosRepository $repositorio,
+        string $nifAutor,
+        bool $publicado
+    ): JsonResponse {
         $articulos = $repositorio->findBy(
             [
                 'nifAutor' => $nifAutor,
                 'publicado' => $publicado
-            ], 
+            ],
             [
-                'titulo' => 'DESC'// (ORGANIZACIÓN)<- DESCENDENTE | 'ASC' <- ASCENDENTE
+                'titulo' => 'DESC' // (ORGANIZACIÓN)<- DESCENDENTE | 'ASC' <- ASCENDENTE
             ]
         );
 
@@ -159,40 +173,142 @@ final class ArticulosController extends AbstractController
         ]);*/
     }
 
-     //R5 -> CONSULTAR POR PARÁMETROS (SALIDA UN REGISRO JSON!!)
-     #[Route('/consultar-articulo/{nifAutor}', 
-     name:'app_articulos_consultar_articulo')]
-     public function consultarArticulo(ArticulosRepository $repositorio,
-     string $nifAutor):JsonResponse
-     {
-         $articulo = $repositorio->findOneBy(
-             [
-                 'nifAutor' => $nifAutor,
-                 
-             ], 
-             [
-                 'titulo' => 'DESC'// (ORGANIZACIÓN)<- DESCENDENTE | 'ASC' <- ASCENDENTE
-             ]
-         );
- 
-         // AQUÍ LA SALIDA NO ES TWIG, ES JSON!!!
-         if($articulo == null) {
-            $miJSON ="Articulo no encontrado";
-        } else {
-             $miJSON = [
-                 'idArticulo' => $articulo->getId(),
-                 'Titulo' => $articulo->getTitulo(),
-                 'Nif Autor' => $articulo->getNifAutor()->getNif(),
-                 'Nombre' => $articulo->getNifAutor()->getNombre(),
-             ];
-        }
-         return new JsonResponse($miJSON);
+    //R5 -> CONSULTAR POR PARÁMETROS (SALIDA UN REGISRO JSON!!)
+    #[Route(
+        '/consultar-articulo/{nifAutor}',
+        name: 'app_articulos_consultar_articulo'
+    )]
+    public function consultarArticulo(
+        ArticulosRepository $repositorio,
+        string $nifAutor
+    ): JsonResponse {
+        $articulo = $repositorio->findOneBy(
+            [
+                'nifAutor' => $nifAutor,
 
-         //SI QUEREMOS DEVOLVER UNA TABLA CON twig, SE PONE LO DE ABAJO COMENTADO
-         //AQUÍ LA SALIDA ES (twig)
-         /*return $this->render('articulos/articulos.html.twig', [
+            ],
+            [
+                'titulo' => 'DESC' // (ORGANIZACIÓN)<- DESCENDENTE | 'ASC' <- ASCENDENTE
+            ]
+        );
+
+        // AQUÍ LA SALIDA NO ES TWIG, ES JSON!!!
+        if ($articulo == null) {
+            $miJSON = "Articulo no encontrado";
+        } else {
+            $miJSON = [
+                'idArticulo' => $articulo->getId(),
+                'Titulo' => $articulo->getTitulo(),
+                'Nif Autor' => $articulo->getNifAutor()->getNif(),
+                'Nombre' => $articulo->getNifAutor()->getNombre(),
+            ];
+        }
+        return new JsonResponse($miJSON);
+
+        //SI QUEREMOS DEVOLVER UNA TABLA CON twig, SE PONE LO DE ABAJO COMENTADO
+        //AQUÍ LA SALIDA ES (twig)
+        /*return $this->render('articulos/articulos.html.twig', [
              'controller_name' => 'ArticulosController',
              'articulos' => [$articulo],<-UN SÓLO REGISTRO
          ]);*/
-     }
+    }
+
+    //  U2 -> ACTUALIZAR POR ID, CON PARÁMETROS Y CAMBIO DEL FOREN KEY!!
+    //    SI SE CAMBIA EL FK, EL TIPO NO ES string, ES EL OBJETO!!
+    #[Route(
+        '/cambiar-articulo/{id}/{titulo}/{nifAutor}',
+        name: 'app_articulos_actualizar'
+    )]
+    public function cambiarArticulo(
+        ManagerRegistry $doctrine,
+        int $id,
+        string $titulo,
+        Autores $nifAutor
+    ): Response {
+        // SACAMOS EL ENTITYMANAGER
+        $entityManager = $doctrine->getManager();
+        $repositorioArticulos = $entityManager->getRepository(Articulos::class);
+        $repositorioAutores = $entityManager->getRepository(Autores::class);
+
+        $articulo = $repositorioArticulos->find($id);
+        $autor = $repositorioAutores->find($nifAutor);
+
+        // CONTROLAMOS EL FALLO
+        if ($articulo == null || $autor == null) {
+            return new Response("<h1> Articulo/Autor No existe </h1>");
+        } else {
+            $articulo->setTitulo($titulo);
+            $articulo->setNifAutor($nifAutor);
+            $entityManager->flush();  //<-ACTUALIZAMOS LA BASE DE DATOS//    
+        }
+
+        return $this->redirectToRoute('app_articulos_ver', [
+            'controller_name' => 'Articulo Actualizado',
+        ]);
+
+        /*
+         return $this->render('articulos/index.html.twig', [
+             'controller_name' => 'ArticulosController',
+         ]);
+         */
+    }
+
+    // D1 ELIMINAR POR ID (TABLA RELACIONADA)
+    #[Route(
+        '/articulos-borrar/{id}',
+        name: 'app_articulos_borrar'
+    )]
+    public function borrarArticulo(
+        EntityManagerInterface $entityManager,
+        int $id
+    ): Response {
+        // BUSCO EL ARTICULO
+        $repositorioArticulos = $entityManager->getRepository(Articulos::class);
+        $articulo = $repositorioArticulos->find($id);
+
+        if ($articulo == null) {
+            return new Response("<h1> Articulo No encontrado <h1>");
+        } else {
+            $entityManager->remove($articulo);
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_articulos_ver', [
+            'controller_name' => 'Articulo Actualizado',
+        ]);
+    }
+
+    // F1 FORMULARIO COMPLETO AMBAS TABLAS
+    // AÑADIMOS UN ARTICULO CON EL SELECT PARA AUTORES
+    // EN EL REQUEST TIENE QUE SER ESTE -> (use Symfony\Component\HttpFoundation\Request;)
+
+    #[Route('/articulos-form', name: 'app_articulos_form')]
+    public function articulosForm(ManagerRegistry $doctrine,
+    Request $request): Response //<-PONER EL CURSOR EN EL (Request) PARA VER QUE ESTÁ BIEN!!
+    {
+        $articulo = new Articulos();
+        $formulario = $this->createFormBuilder($articulo)
+
+        ->add('titulo', TextType::class,[ //<- ESTO EQUIVALE A <input type="text" name="titulo">
+            'label' => 'Titulo'
+        ])
+
+        ->add('publicado', RadioType::class,[ 
+            'label' => '¿Está publicado?',
+            'value' => true
+        ])  
+
+        ->add('nifAutor', EntityType::class,[ 
+            'label' => 'Elige Autor',
+            'placeholder' => 'Elija opción',
+            'class' => Autores::class,
+            'choice_label' => 'nombre'
+        ])
+
+        ->getForm();
+
+        return $this->render('articulos/index.html.twig', [
+            'controller_name' => 'ArticulosController',
+        ]);
+    }
 }
