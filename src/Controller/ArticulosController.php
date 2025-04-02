@@ -216,8 +216,8 @@ final class ArticulosController extends AbstractController
     //  U2 -> ACTUALIZAR POR ID, CON PARÁMETROS Y CAMBIO DEL FOREN KEY!!
     //    SI SE CAMBIA EL FK, EL TIPO NO ES string, ES EL OBJETO!!
     #[Route(
-        '/cambiar-articulo/{id}/{titulo}/{nifAutor}',
-        name: 'app_articulos_actualizar'
+        '/cambiar-articulo/{id}/{titulo}/{nifAutor}',/*<-COPIANDO ESTA LINEA Y PEGANDO                                                   CUALQUIER COSA LA TABLA FINAL*/
+        name: 'app_articulos_actualizar'            /*EN LA WEB PODEMOS MODIFICAR CUALQUIER DATO DE LA TABLA FINAL*/
     )]
     public function cambiarArticulo(
         ManagerRegistry $doctrine,
@@ -283,32 +283,58 @@ final class ArticulosController extends AbstractController
     // EN EL REQUEST TIENE QUE SER ESTE -> (use Symfony\Component\HttpFoundation\Request;)
 
     #[Route('/articulos-form', name: 'app_articulos_form')]
-    public function articulosForm(ManagerRegistry $doctrine,
-    Request $request): Response //<-PONER EL CURSOR EN EL (Request) PARA VER QUE ESTÁ BIEN!!
+    public function articulosForm(
+        ManagerRegistry $doctrine,
+        Request $envio
+    ): Response //<-PONER EL CURSOR EN EL (Request) PARA VER QUE ESTÁ BIEN!!
     {
         $articulo = new Articulos();
         $formulario = $this->createFormBuilder($articulo)
 
-        ->add('titulo', TextType::class,[ //<- ESTO EQUIVALE A <input type="text" name="titulo">
-            'label' => 'Titulo'
-        ])
+            //1º CAMPO
+            ->add('titulo', TextType::class, [ //<- ESTO EQUIVALE AL <input type="text" name="titulo">
+                'label' => 'Titulo'
+            ])
+            //2º CAMPO 
+            ->add('publicado', RadioType::class, [
+                'label' => '¿Está publicado?',
+                'required' => false, //<-ESTO EVITA EL ERROR DEL SÍ, NÓ
+                'value' => false,   //<-VALOR POR DEFECTO SI NO SE MARCA
+            ])
+            // CON EL RADIO SÍ (x) | NÓ () //
+            /**/
 
-        ->add('publicado', RadioType::class,[ 
-            'label' => '¿Está publicado?',
-            'value' => true
-        ])  
+            //3º CAMPO
+            ->add('nifAutor', EntityType::class, [
+                'label' => 'Elige Autor',
+                'placeholder' => 'Elija opción',
+                'class' => Autores::class,
+                'choice_label' => 'nombre'
+            ])
 
-        ->add('nifAutor', EntityType::class,[ 
-            'label' => 'Elige Autor',
-            'placeholder' => 'Elija opción',
-            'class' => Autores::class,
-            'choice_label' => 'nombre'
-        ])
+            ->getForm();
 
-        ->getForm();
+        /*UNA VEZ HEMOS PINTADO EL FORMULARIO, LO MANDAMOS Y PREPARAMOS 
+            LA RECEPCIÓN DE SUS DATOS*/
 
-        return $this->render('articulos/index.html.twig', [
-            'controller_name' => 'ArticulosController',
+        $formulario->handleRequest($envio);
+        if ($formulario->isSubmitted() && $formulario->isValid()) {
+            $entityManager = $doctrine->getManager();
+            $entityManager->persist($articulo);
+            $entityManager->flush();
+
+            //REDIRECCIONAMOS
+            return $this->redirectToRoute('app_articulos_ver');
+        }
+
+
+
+        //PINTAMOS EL FORMULARIO
+        return $this->render('articulos/form.articulos.html.twig', [
+            'controller_name' => 'Formulario de Articulos',
+            'formulario' => $formulario->createView(),
+
+
         ]);
     }
 }
